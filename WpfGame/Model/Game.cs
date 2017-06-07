@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using IBot;
 using TicTacToe;
@@ -8,8 +9,12 @@ namespace WpfGame.Model
 {
     public class Game
     {
+        public const int BotStepDelay = 700;
+        public const int BotFailDelay = BotStepDelay + 15000;
+
         private readonly IPlayer[] _players = new IPlayer[2];
         private int _currentPlayerIndex;
+        private CancellationTokenSource _lastStepSource;
 
         private Game(Field field, IPlayer firstPlayer, IPlayer secondPlayer)
         {
@@ -27,6 +32,7 @@ namespace WpfGame.Model
         public static Game Instance { get; private set; }
 
         public event EventHandler<TurnedEventArgs> Turned;
+        public event EventHandler<WinEventArgs> Win;
 
         private void ConnectPlayerToTurnedEvent(IPlayer player)
         {
@@ -47,22 +53,49 @@ namespace WpfGame.Model
             return NextPlayerStep();
         }
 
-        public Task NextPlayerStep()
+        public async Task NextPlayerStep()
         {
+            if (IsEnded)
+            {
+                return;
+            }
+
+            _lastStepSource = new CancellationTokenSource();
             _currentPlayerIndex++;
             _currentPlayerIndex %= 2;
 
-            return CurrentStepPlayer.SetCanTurn();
+            if (CurrentStepPlayer is BotPlayer)
+            {
+                _lastStepSource.CancelAfter(BotFailDelay);
+            }
+
+            try
+            {
+                await CurrentStepPlayer.SetCanTurn(_lastStepSource.Token);
+            }
+            catch (TaskCanceledException)
+            {
+                OnWin(CurrentStepPlayer == FirstPlayer ? SecondPlayer : FirstPlayer);
+            }
         }
 
         private void OnTurned(object sender, TurnedEventArgs eventArgs)
         {
+            _lastStepSource.Dispose();
+            _lastStepSource = null;
+
             if (Field.IsEnd())
             {
                 IsEnded = true;
+                OnWin(CurrentStepPlayer);
             }
 
             Turned?.Invoke(sender, eventArgs);
+        }
+
+        private void OnWin(IPlayer winner)
+        {
+            Win?.Invoke(this, new WinEventArgs { Winner = winner });
         }
 
         public static void CreateWithBothHumans()

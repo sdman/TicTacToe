@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using TicTacToe;
 
@@ -19,11 +20,21 @@ namespace WpfGame.Model
 
         public Task SetCanTurn()
         {
+            return SetCanTurn(CancellationToken.None);
+        }
+
+        public Task SetCanTurn(CancellationToken cancellationToken)
+        {
             _canTurn = true;
             return Task.FromResult(false);
         }
 
         public Task ForceTurn(int x, int y)
+        {
+            return ForceTurn(x, y, CancellationToken.None);
+        }
+
+        public Task ForceTurn(int x, int y, CancellationToken cancellationToken)
         {
             return Task.Run(() =>
             {
@@ -35,7 +46,7 @@ namespace WpfGame.Model
                 Field.Turn(PlayerCellState, x, y);
                 _canTurn = false;
                 Turned?.Invoke(this, new TurnedEventArgs { CellState = PlayerCellState, X = x, Y = y });
-            });
+            }, cancellationToken);
         }
 
         public event EventHandler<TurnedEventArgs> Turned;

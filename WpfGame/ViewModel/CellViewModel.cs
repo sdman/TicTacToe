@@ -8,10 +8,10 @@ namespace WpfGame.ViewModel
     public class CellViewModel : INotifyPropertyChanged
     {
         private bool _canSelect = true;
+        private Color _cellColor = Colors.White;
         private string _sign;
         private int _x;
         private int _y;
-        private Color _cellColor = Colors.White;
 
         public CellViewModel(int x, int y, ICommand cellLeftClickCommand, ICommand cellRightClickCommand)
         {

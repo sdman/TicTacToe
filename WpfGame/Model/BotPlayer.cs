@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using IBot;
 using TicTacToe;
@@ -19,26 +20,34 @@ namespace WpfGame.Model
 
         public Task SetCanTurn()
         {
+            return SetCanTurn(CancellationToken.None);
+        }
+
+        public Task SetCanTurn(CancellationToken token)
+        {
             _canTurn = true;
             Cell cell = _bot.Step();
-            return ForceTurn(cell.X, cell.Y);
+            return ForceTurn(cell.X, cell.Y, token);
         }
 
         public Task ForceTurn(int x, int y)
         {
-            return Task.Run(async () =>
+            return ForceTurn(x, y, CancellationToken.None);
+        }
+
+        public Task ForceTurn(int x, int y, CancellationToken cancellationToken)
+        {
+            if (!_canTurn || _bot.Field[x, y].State != CellState.Empty)
             {
-                if (!_canTurn || _bot.Field[x, y].State != CellState.Empty)
-                {
-                    return;
-                }
+                return Task.FromResult(false);
+            }
 
-                await Task.Delay(700);
-
+            return Task.Delay(Game.BotStepDelay, cancellationToken).ContinueWith(task =>
+            {
                 _canTurn = false;
                 _bot.Field.Turn(_bot.State, x, y);
                 Turned?.Invoke(this, new TurnedEventArgs { CellState = PlayerCellState, X = x, Y = y });
-            });
+            }, cancellationToken);
         }
 
         public event EventHandler<TurnedEventArgs> Turned;

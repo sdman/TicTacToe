@@ -6,10 +6,10 @@ namespace TicTacToe
 {
     public class Field
     {
-        private const int VICTORY_SEQUENCE_SIZE = 5;
+        private const int VictorySequenceSize = 5;
         private readonly Dictionary<Point, Cell> _cells = new Dictionary<Point, Cell>();
 
-        public int VictorySequencySize => VICTORY_SEQUENCE_SIZE;
+        public int VictorySequencySize => VictorySequenceSize;
         public Cell LastTurn { get; private set; }
 
         public Cell this[Point point] => this[point.X, point.Y];
@@ -74,7 +74,7 @@ namespace TicTacToe
 
         public bool IsEnd()
         {
-            return LastTurn != null ? CalcMaxScore() >= VICTORY_SEQUENCE_SIZE : false;
+            return LastTurn != null && CalcMaxScore() >= VictorySequenceSize;
         }
 
         public IEnumerable<Point> GetWinningPoints()
@@ -84,7 +84,7 @@ namespace TicTacToe
                 return null;
             }
 
-            return new Point[]{new Point(0,0) };
+            return new[] { new Point(0, 0) };
         }
 
         private int CalcMaxScore()
@@ -103,7 +103,7 @@ namespace TicTacToe
         private int CountScoreInDirection(int dx, int dy)
         {
             int result = 0;
-            for (int i = 1; i < VICTORY_SEQUENCE_SIZE; i++)
+            for (int i = 1; i < VictorySequenceSize; i++)
             {
                 if (this[LastTurn.X + i * dx, LastTurn.Y + i * dy].State == LastTurn.State)
                 {

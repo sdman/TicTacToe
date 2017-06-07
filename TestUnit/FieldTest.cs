@@ -6,21 +6,21 @@ using TicTacToe;
 namespace TestUnit
 {
     /// <summary>
-    /// Тестирование поля игры
+    ///     Тестирование поля игры
     /// </summary>
     [TestClass]
     public class FieldTest
     {
         /// <summary>
-        /// Конструктор по умолчанию создает пустое поле
+        ///     Конструктор по умолчанию создает пустое поле
         /// </summary>
         [TestMethod]
         public void TestFieldConstructor()
         {
-            var field = new Field();
-            for (long x = Int32.MinValue; x < Int32.MaxValue; x += (Math.Abs(x) / 2 + 1))
+            Field field = new Field();
+            for (long x = Int32.MinValue; x < Int32.MaxValue; x += Math.Abs(x) / 2 + 1)
             {
-                for (long y = Int32.MinValue; y < Int32.MaxValue; y += (Math.Abs(y) / 2 + 1))
+                for (long y = Int32.MinValue; y < Int32.MaxValue; y += Math.Abs(y) / 2 + 1)
                 {
                     Assert.AreEqual(CellState.Empty, field[(int)x, (int)y].State);
                     Assert.AreEqual(x, field[(int)x, (int)y].X);
@@ -30,12 +30,12 @@ namespace TestUnit
         }
 
         /// <summary>
-        /// Успешный ход крестиком
+        ///     Успешный ход крестиком
         /// </summary>
         [TestMethod]
         public void TestTurnTickSuccess()
         {
-            var field = new Field();
+            Field field = new Field();
             field.Turn(CellState.Tick, 0, 0);
             Assert.AreEqual(CellState.Tick, field[0, 0].State);
             Assert.AreEqual(CellState.Empty, field[0, 1].State);
@@ -49,14 +49,13 @@ namespace TestUnit
             Assert.AreEqual(CellState.Empty, field[Int32.MaxValue, Int32.MaxValue].State);
         }
 
-
         /// <summary>
-        /// Успешный ход ноликом
+        ///     Успешный ход ноликом
         /// </summary>
         [TestMethod]
         public void TestTurnTackSuccess()
         {
-            var field = new Field();
+            Field field = new Field();
             field.Turn(CellState.Tack, 0, 0);
             Assert.AreEqual(CellState.Tack, field[0, 0].State);
             Assert.AreEqual(CellState.Empty, field[0, 1].State);
@@ -71,59 +70,59 @@ namespace TestUnit
         }
 
         /// <summary>
-        /// Успешный ход на максимальные координаты поля
+        ///     Успешный ход на максимальные координаты поля
         /// </summary>
         [TestMethod]
         public void TestTurnWithMaxXYSuccess()
         {
-            var field = new Field();
+            Field field = new Field();
             field.Turn(CellState.Tick, Int32.MaxValue, Int32.MaxValue);
             Assert.AreEqual(CellState.Tick, field[Int32.MaxValue, Int32.MaxValue].State);
         }
 
         /// <summary>
-        /// Успешный ход на минимальные координаты поля
+        ///     Успешный ход на минимальные координаты поля
         /// </summary>
         [TestMethod]
         public void TestTurnWithMinXYSuccess()
         {
-            var field = new Field();
+            Field field = new Field();
             field.Turn(CellState.Tick, Int32.MinValue, Int32.MinValue);
             Assert.AreEqual(CellState.Tick, field[Int32.MinValue, Int32.MinValue].State);
         }
 
         /// <summary>
-        /// Попытка пойти в занятую ячейку должна приводить к исключению
+        ///     Попытка пойти в занятую ячейку должна приводить к исключению
         /// </summary>
         [TestMethod]
         [ExpectedException(typeof(ApplicationException), "Нельзя пойти пустым местом", AllowDerivedTypes = true)]
         public void TestTurnEmptyCellFail()
         {
-            var field = new Field();
+            Field field = new Field();
             field.Turn(CellState.Tick, 0, 1);
             field.Turn(CellState.Empty, 0, 0);
         }
 
         /// <summary>
-        /// Попытка пойти в занятую ячейку должна приводить к исключению
+        ///     Попытка пойти в занятую ячейку должна приводить к исключению
         /// </summary>
         [TestMethod]
         [ExpectedException(typeof(ApplicationException), "Нельзя пойти в занятую ячейку", AllowDerivedTypes = true)]
         public void TestTurnToOccupatedCellFail()
         {
-            var field = new Field();
+            Field field = new Field();
             field.Turn(CellState.Tick, 0, 0);
             field.Turn(CellState.Tack, 0, 0);
         }
 
         /// <summary>
-        /// Попытка пойти в занятую ячейку должна приводить к исключению
+        ///     Попытка пойти в занятую ячейку должна приводить к исключению
         /// </summary>
         [TestMethod]
         [ExpectedException(typeof(ApplicationException), "Нельзя пойти в занятую ячейку", AllowDerivedTypes = true)]
         public void TestAnywayTurnToOccupatedCellFail()
         {
-            var field = new Field();
+            Field field = new Field();
             field.Turn(CellState.Tick, 0, 0);
             field.Turn(CellState.Tack, 0, 1);
             Assert.AreEqual(CellState.Tick, field[0, 0].State);
@@ -132,143 +131,118 @@ namespace TestUnit
         }
 
         /// <summary>
-        /// Попытка пойти в два раза подряд одной фигурой приводит к исключению
+        ///     Попытка пойти в два раза подряд одной фигурой приводит к исключению
         /// </summary>
         [TestMethod]
         [ExpectedException(typeof(ApplicationException), "Нельзя пойти дважды.", AllowDerivedTypes = true)]
         public void TestTurnTwiceWithTickFail()
         {
-            var field = new Field();
+            Field field = new Field();
             field.Turn(CellState.Tick, 0, 0);
             field.Turn(CellState.Tick, 0, 1);
         }
 
         /// <summary>
-        /// Попытка пойти в два раза подряд одной фигурой приводит к исключению
+        ///     Попытка пойти в два раза подряд одной фигурой приводит к исключению
         /// </summary>
         [TestMethod]
         [ExpectedException(typeof(ApplicationException), "Нельзя пойти дважды.", AllowDerivedTypes = true)]
         public void TestTurnTwiceWithTackFail()
         {
-            var field = new Field();
+            Field field = new Field();
             field.Turn(CellState.Tack, 0, 0);
             field.Turn(CellState.Tack, 0, 1);
         }
 
         /// <summary>
-        /// Проверка на окончание игры
+        ///     Проверка на окончание игры
         /// </summary>
         [TestMethod]
         [Timeout(200)]
         public void TestGameEnd1()
         {
-            var field = new Field();
+            Field field = new Field();
 
-            PlayTurns(field, CellState.Tick, new[] {
-                new[] {0, 0},
-                new[] {0, 1},
-                new[] {1, 0},
-                new[] {1, 1},
-                new[] {-1, 0},
-                new[] {-1, 1},
-                new[] {2, 0},
-                new[] {2, 1},
-                new[] {-2, 0}
-            });
+            PlayTurns(field, CellState.Tick,
+                new[]
+                {
+                    new[] { 0, 0 }, new[] { 0, 1 }, new[] { 1, 0 }, new[] { 1, 1 }, new[] { -1, 0 }, new[] { -1, 1 },
+                    new[] { 2, 0 }, new[] { 2, 1 }, new[] { -2, 0 }
+                });
             Assert.IsTrue(field.IsEnd());
         }
 
         /// <summary>
-        /// Проверка на окончание игры
+        ///     Проверка на окончание игры
         /// </summary>
         [TestMethod]
         [Timeout(200)]
         public void TestGameEnd2()
         {
-            var field = new Field();
+            Field field = new Field();
 
-            PlayTurns(field, CellState.Tack, new[] {
-                new[] {0, 0},
-                new[] {1, 0},
-                new[] {0, 1},
-                new[] {1, 1},
-                new[] {0, -1},
-                new[] {-1, 1},
-                new[] {0, 2},
-                new[] {2, 1},
-                new[] {0, -2}
-            });
+            PlayTurns(field, CellState.Tack,
+                new[]
+                {
+                    new[] { 0, 0 }, new[] { 1, 0 }, new[] { 0, 1 }, new[] { 1, 1 }, new[] { 0, -1 }, new[] { -1, 1 },
+                    new[] { 0, 2 }, new[] { 2, 1 }, new[] { 0, -2 }
+                });
             Assert.IsTrue(field.IsEnd());
         }
 
         /// <summary>
-        /// Проверка на окончание игры
+        ///     Проверка на окончание игры
         /// </summary>
         [TestMethod]
         [Timeout(200)]
         public void TestGameEnd3()
         {
-            var field = new Field();
+            Field field = new Field();
 
-            PlayTurns(field, CellState.Tack, new[] {
-                new[] {0, 0},
-                new[] {-10, 10},
-                new[] {1, 1},
-                new[] {11, 1},
-                new[] {-1, -1},
-                new[] {-11, 1},
-                new[] {2, 2},
-                new[] {2, 1},
-                new[] {-2, -2}
-            });
+            PlayTurns(field, CellState.Tack,
+                new[]
+                {
+                    new[] { 0, 0 }, new[] { -10, 10 }, new[] { 1, 1 }, new[] { 11, 1 }, new[] { -1, -1 },
+                    new[] { -11, 1 }, new[] { 2, 2 }, new[] { 2, 1 }, new[] { -2, -2 }
+                });
             Assert.IsTrue(field.IsEnd());
         }
 
         /// <summary>
-        /// Проверка на окончание игры
+        ///     Проверка на окончание игры
         /// </summary>
         [TestMethod]
         [Timeout(200)]
         public void TestGameEnd4()
         {
-            var field = new Field();
-            PlayTurns(field, CellState.Tick, new[] {
-                new[] {0, 0},
-                new[] {-1, 11},
-                new[] {-1, 1},
-                new[] {14, 1},
-                new[] {1, -1},
-                new[] {-41, 1},
-                new[] {-2, 2},
-                new[] {-3, 3},
-                new[] {2, -2}
-            });
+            Field field = new Field();
+            PlayTurns(field, CellState.Tick,
+                new[]
+                {
+                    new[] { 0, 0 }, new[] { -1, 11 }, new[] { -1, 1 }, new[] { 14, 1 }, new[] { 1, -1 },
+                    new[] { -41, 1 }, new[] { -2, 2 }, new[] { -3, 3 }, new[] { 2, -2 }
+                });
             Assert.IsTrue(field.IsEnd());
         }
 
         /// <summary>
-        /// Получить ячейки в которых стоит крестик или нолик
+        ///     Получить ячейки в которых стоит крестик или нолик
         /// </summary>
         [TestMethod]
         [Timeout(200)]
         public void TestGetMarkedCells()
         {
-            var field = new Field();
-            PlayTurns(field, CellState.Tick, new[] {
-                new[] {0, 0},
-                new[] {-1, 11},
-                new[] {-1, 1},
-                new[] {14, 1},
-                new[] {1, -1},
-                new[] {-41, 1},
-                new[] {-2, 2},
-                new[] {-3, 3},
-                new[] {2, -2}
-            });
+            Field field = new Field();
+            PlayTurns(field, CellState.Tick,
+                new[]
+                {
+                    new[] { 0, 0 }, new[] { -1, 11 }, new[] { -1, 1 }, new[] { 14, 1 }, new[] { 1, -1 },
+                    new[] { -41, 1 }, new[] { -2, 2 }, new[] { -3, 3 }, new[] { 2, -2 }
+                });
 
             IList<Cell> cells = field.GetMarkedCells();
             Assert.AreEqual(9, cells.Count);
-            foreach (var cell in cells)
+            foreach (Cell cell in cells)
             {
                 Assert.AreNotEqual(CellState.Empty, cell.State);
             }
@@ -276,12 +250,12 @@ namespace TestUnit
 
         private void PlayTurns(Field field, CellState whoBegins, int[][] positions)
         {
-            var currentPlayer = whoBegins;
-            foreach (var position in positions)
+            CellState currentPlayer = whoBegins;
+            foreach (int[] position in positions)
             {
                 Assert.IsFalse(field.IsEnd());
                 field.Turn(currentPlayer, position[0], position[1]);
-                currentPlayer = (currentPlayer == CellState.Tick) ? CellState.Tack : CellState.Tick;
+                currentPlayer = currentPlayer == CellState.Tick ? CellState.Tack : CellState.Tick;
             }
         }
     }

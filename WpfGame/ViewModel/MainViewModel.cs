@@ -38,6 +38,7 @@ namespace WpfGame.ViewModel
 
             _gameInstance = Game.Instance;
             _gameInstance.Turned += OnTurned;
+            _gameInstance.Win += OnWin;
 
             _cells = CreateCellViews();
             UpdateCellViews(0, 0);
@@ -69,7 +70,7 @@ namespace WpfGame.ViewModel
         public event PropertyChangedEventHandler PropertyChanged;
         public event EventHandler RestartNeeded;
 
-        private void OnTurned(object sender, TurnedEventArgs turnedEventArgs)
+        private async void OnTurned(object sender, TurnedEventArgs turnedEventArgs)
         {
             CellViewModel vm = _cells.FirstOrDefault(c => c.X == turnedEventArgs.X && c.Y == turnedEventArgs.Y);
 
@@ -79,31 +80,34 @@ namespace WpfGame.ViewModel
                 UpdateCell(vm, turnedEventArgs.CellState);
             }
 
+            await _gameInstance.NextPlayerStep();
+
             if (!_gameInstance.IsEnded)
             {
-                _gameInstance.NextPlayerStep();
-
-                _winPoints = _gameInstance.Field.GetWinningPoints();
-
                 StepInfoText = _gameInstance.CurrentStepPlayer == _gameInstance.FirstPlayer ? FirstPlayerText
                     : SecondPlayerText;
             }
-            else
+        }
+
+        private void OnWin(object sender, WinEventArgs winEventArgs)
+        {
+            StepInfoText = winEventArgs.Winner == _gameInstance.FirstPlayer ? FirstPlayerWinText : SecondPlayerWinText;
+
+            _winPoints = _gameInstance.Field.GetWinningPoints();
+
+            if (_winPoints == null)
             {
-                _winPoints = _gameInstance.Field.GetWinningPoints();
+                return;
+            }
 
-                foreach (Point point in _winPoints)
+            foreach (Point point in _winPoints)
+            {
+                CellViewModel cellVm = _cells.FirstOrDefault(c => c.X == point.X && c.Y == point.Y);
+
+                if (cellVm != null)
                 {
-                    CellViewModel cellVm = _cells.FirstOrDefault(c => c.X == point.X && c.Y == point.Y);
-
-                    if (cellVm != null)
-                    {
-                        cellVm.CellColor = Colors.Red;
-                    }
+                    cellVm.CellColor = Colors.Red;
                 }
-
-                StepInfoText = _gameInstance.CurrentStepPlayer == _gameInstance.FirstPlayer ? FirstPlayerWinText
-                    : SecondPlayerWinText;
             }
         }
 

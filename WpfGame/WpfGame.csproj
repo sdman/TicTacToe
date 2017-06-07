@@ -66,6 +66,7 @@
     <Compile Include="Model\IBotSelector.cs" />
     <Compile Include="Model\IPlayer.cs" />
     <Compile Include="Model\TurnedEventArgs.cs" />
+    <Compile Include="Model\WinEventArgs.cs" />
     <Compile Include="Properties\Annotations.cs" />
     <Compile Include="ViewModel\GamersSelectViewModel.cs" />
     <Compile Include="ViewModel\RelayCommand.cs" />

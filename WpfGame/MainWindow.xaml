@@ -27,7 +27,7 @@
                         <Button.Background>
                             <SolidColorBrush Color="{Binding CellColor }" />
                         </Button.Background>
-                        
+
                         <Button.InputBindings>
                             <MouseBinding Gesture="LeftClick" Command="{Binding CellLeftClickCommand}" CommandParameter="{Binding}" />
                             <MouseBinding Gesture="RightClick" Command="{Binding CellRightClickCommand}" CommandParameter="{Binding}" />

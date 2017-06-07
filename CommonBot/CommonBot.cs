@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using IBot;
 using TicTacToe;
 
@@ -10,17 +8,17 @@ namespace MaxBot
 {
     public class CommonBot : AbstractBot
     {
+        private static readonly Random _random = new Random();
+
         public CommonBot(Field field, CellState state)
-            : base(field, state) {  }
-
-        delegate IComparable EstimateFunction(Point point);
-
-        static readonly Random _random = new Random();
+            : base(field, state)
+        {
+        }
 
         public override Cell Step()
         {
             List<Point> candidates = FilterCellsStageThree();
-            if(candidates.Count == 0)
+            if (candidates.Count == 0)
             {
                 return new Cell(0, 0, State);
             }
@@ -28,33 +26,32 @@ namespace MaxBot
             return new Cell(candidates[index], State);
         }
 
-
-        List<Point> FilterCellsStageOne()
+        private List<Point> FilterCellsStageOne()
         {
             return FilterCellsCore(GetNearestPoints(), EstimateForStageOne);
         }
 
-        List<Point> FilterCellsStageTwo()
+        private List<Point> FilterCellsStageTwo()
         {
             return FilterCellsCore(FilterCellsStageOne(), EstimateForStageTwo);
         }
 
-        List<Point> FilterCellsStageThree()
+        private List<Point> FilterCellsStageThree()
         {
             return FilterCellsCore(FilterCellsStageTwo(), EstimateForStageThree);
         }
 
-        List<Point> FilterCellsCore(IEnumerable<Point> source, EstimateFunction estimator)
+        private List<Point> FilterCellsCore(IEnumerable<Point> source, EstimateFunction estimator)
         {
-            var result = new List<Point>();
+            List<Point> result = new List<Point>();
             IComparable bestEstimate = null;
 
             foreach (Point point in source)
             {
                 if (Field[point].State == CellState.Empty)
                 {
-                    var estimate = estimator(point);
-         
+                    IComparable estimate = estimator(point);
+
                     int compareResult = estimate.CompareTo(bestEstimate);
 
                     if (!(compareResult < 0))
@@ -66,12 +63,11 @@ namespace MaxBot
                         }
                         result.Add(point);
                     }
-                }                
+                }
             }
 
             return result;
         }
-
 
         internal IComparable EstimateForStageOne(Point point)
         {
@@ -82,7 +78,7 @@ namespace MaxBot
             {
                 selfScore = int.MaxValue;
             }
-                
+
             return Math.Max(selfScore, opponentScore);
         }
 
@@ -103,7 +99,7 @@ namespace MaxBot
                     else if (Field[x, y].State == OpponentState)
                     {
                         opponentCount++;
-                    }  
+                    }
                 }
             }
 
@@ -117,28 +113,25 @@ namespace MaxBot
 
         private List<Point> GetNearestPoints()
         {
-            List<Point> marked = Field.GetMarkedCells()
-                .Select(cell => new Point(cell.X, cell.Y))
-                .ToList();
+            List<Point> marked = Field.GetMarkedCells().Select(cell => new Point(cell.X, cell.Y)).ToList();
             HashSet<Point> result = new HashSet<Point>();
-            foreach(Point point in marked)
+            foreach (Point point in marked)
             {
-                for (int dx = -Field.VictorySequencySize + 1;
-                    dx < Field.VictorySequencySize - 1; dx++)
+                for (int dx = -Field.VictorySequencySize + 1; dx < Field.VictorySequencySize - 1; dx++)
                 {
-                    for (int dy = -Field.VictorySequencySize + 1;
-                    dy < Field.VictorySequencySize - 1; dy++)
+                    for (int dy = -Field.VictorySequencySize + 1; dy < Field.VictorySequencySize - 1; dy++)
                     {
                         result.Add(new Point(point.X + dx, point.Y + dy));
                     }
                 }
-            }  
+            }
             return result.ToList();
         }
 
         protected int CalcScore(Point location, CellState state)
         {
-            int[] counts = new int[] {
+            int[] counts =
+            {
                 CalcScoreInDirection(location, -1, 0, state) + CalcScoreInDirection(location, 1, 0, state),
                 CalcScoreInDirection(location, 0, -1, state) + CalcScoreInDirection(location, 0, 1, state),
                 CalcScoreInDirection(location, -1, -1, state) + CalcScoreInDirection(location, 1, 1, state),
@@ -148,7 +141,7 @@ namespace MaxBot
             return counts.Max() + 1;
         }
 
-        int CalcScoreInDirection(Point start, int dx, int dy, CellState state)
+        private int CalcScoreInDirection(Point start, int dx, int dy, CellState state)
         {
             int result = 0;
 
@@ -164,5 +157,7 @@ namespace MaxBot
 
             return result;
         }
+
+        private delegate IComparable EstimateFunction(Point point);
     }
 }
