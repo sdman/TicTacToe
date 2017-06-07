@@ -1,9 +1,9 @@
-﻿using System;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
+using System.Windows.Media;
 
-namespace WpfGame
+namespace WpfGame.ViewModel
 {
     public class CellViewModel : INotifyPropertyChanged
     {
@@ -11,6 +11,7 @@ namespace WpfGame
         private string _sign;
         private int _x;
         private int _y;
+        private Color _cellColor = Colors.White;
 
         public CellViewModel(int x, int y, ICommand cellLeftClickCommand, ICommand cellRightClickCommand)
         {
@@ -57,22 +58,16 @@ namespace WpfGame
             set
             {
                 _sign = value;
-
-                if (!String.IsNullOrEmpty(value))
-                {
-                    CanSelect = false;
-                }
-
                 OnPropertyChanged();
             }
         }
 
-        public bool CanSelect
+        public Color CellColor
         {
-            get => _canSelect;
-            private set
+            get => _cellColor;
+            set
             {
-                _canSelect = value;
+                _cellColor = value;
                 OnPropertyChanged();
             }
         }

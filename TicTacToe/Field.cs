@@ -1,39 +1,29 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using TicTacToe;
 
 namespace TicTacToe
 {
     public class Field
     {
         private const int VICTORY_SEQUENCE_SIZE = 5;
-        private Dictionary<Point, Cell> _cells = new Dictionary<Point, Cell>();
-        private Cell _lastTurn;
+        private readonly Dictionary<Point, Cell> _cells = new Dictionary<Point, Cell>();
 
         public int VictorySequencySize => VICTORY_SEQUENCE_SIZE;
-        public Cell LastTurn => _lastTurn;
+        public Cell LastTurn { get; private set; }
 
-        public Cell this[Point point]
-        {
-            get
-            {
-                return this[point.X, point.Y];
-            }
-        }
+        public Cell this[Point point] => this[point.X, point.Y];
 
         public Cell this[int x, int y]
         {
             get
             {
                 Point key = new Point(x, y);
-                if(_cells.ContainsKey(key))
+                if (_cells.ContainsKey(key))
                 {
                     return _cells[key];
-                } else 
-                {
-                    return new Cell(x, y);
                 }
+                return new Cell(x, y);
             }
         }
 
@@ -54,8 +44,8 @@ namespace TicTacToe
             CheckOccupiedCell(x, y);
 
             Point key = new Point(x, y);
-            _lastTurn = new Cell(x, y, state);
-            _cells.Add(key, _lastTurn);
+            LastTurn = new Cell(x, y, state);
+            _cells.Add(key, LastTurn);
         }
 
         private void CheckEmptyState(CellState state)
@@ -68,7 +58,7 @@ namespace TicTacToe
 
         private void CheckDoubleTurn(CellState state)
         {
-            if (_lastTurn != null && _lastTurn.State == state)
+            if (LastTurn != null && LastTurn.State == state)
             {
                 throw new ApplicationException("Нельзя пойти дважды.");
             }
@@ -84,12 +74,23 @@ namespace TicTacToe
 
         public bool IsEnd()
         {
-            return _lastTurn != null ? CalcMaxScore() >= VICTORY_SEQUENCE_SIZE : false;
+            return LastTurn != null ? CalcMaxScore() >= VICTORY_SEQUENCE_SIZE : false;
+        }
+
+        public IEnumerable<Point> GetWinningPoints()
+        {
+            if (!IsEnd())
+            {
+                return null;
+            }
+
+            return new Point[]{new Point(0,0) };
         }
 
         private int CalcMaxScore()
         {
-            int[] scores = new int[] {
+            int[] scores =
+            {
                 CountScoreInDirection(-1, 0) + CountScoreInDirection(1, 0),
                 CountScoreInDirection(0, -1) + CountScoreInDirection(0, 1),
                 CountScoreInDirection(-1, -1) + CountScoreInDirection(1, 1),
@@ -104,27 +105,25 @@ namespace TicTacToe
             int result = 0;
             for (int i = 1; i < VICTORY_SEQUENCE_SIZE; i++)
             {
-                if (this[_lastTurn.X + i * dx, _lastTurn.Y + i * dy].State == _lastTurn.State)
+                if (this[LastTurn.X + i * dx, LastTurn.Y + i * dy].State == LastTurn.State)
                 {
                     result++;
-                } 
+                }
                 else
                 {
                     break;
-                } 
+                }
             }
             return result;
         }
 
         private CellState GetOpponent(CellState state)
         {
-            if(state == CellState.Empty)
+            if (state == CellState.Empty)
             {
                 return state;
-            } else
-            {
-                return state == CellState.Tick ? CellState.Tack : CellState.Tick;
             }
+            return state == CellState.Tick ? CellState.Tack : CellState.Tick;
         }
 
         public List<Cell> GetMarkedCells()

@@ -4,19 +4,20 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media;
 using TicTacToe;
 using WpfGame.Annotations;
 using WpfGame.Model;
-using WpfGame.ViewModel;
 
-namespace WpfGame
+namespace WpfGame.ViewModel
 {
     public class MainViewModel : INotifyPropertyChanged
     {
         private const string FirstPlayerText = "Ходит первый игрок (крестики).";
         private const string SecondPlayerText = "Ходит второй игрок (нолики).";
+        private const string FirstPlayerWinText = "Выиграл первый игрок (крестики).";
+        private const string SecondPlayerWinText = "Выиграл второй игрок (нолики).";
 
         private const int DefaultRowsCount = 15;
         private const int DefaultColumnsCount = 15;
@@ -27,6 +28,7 @@ namespace WpfGame
 
         private readonly Game _gameInstance;
         private string _stepInfoText;
+        private IEnumerable<Point> _winPoints;
 
         public MainViewModel()
         {
@@ -81,19 +83,27 @@ namespace WpfGame
             {
                 _gameInstance.NextPlayerStep();
 
+                _winPoints = _gameInstance.Field.GetWinningPoints();
+
                 StepInfoText = _gameInstance.CurrentStepPlayer == _gameInstance.FirstPlayer ? FirstPlayerText
                     : SecondPlayerText;
             }
             else
             {
-                if (_gameInstance.CurrentStepPlayer == _gameInstance.FirstPlayer)
+                _winPoints = _gameInstance.Field.GetWinningPoints();
+
+                foreach (Point point in _winPoints)
                 {
-                    MessageBox.Show("Выиграл первый игрок.");
+                    CellViewModel cellVm = _cells.FirstOrDefault(c => c.X == point.X && c.Y == point.Y);
+
+                    if (cellVm != null)
+                    {
+                        cellVm.CellColor = Colors.Red;
+                    }
                 }
-                else
-                {
-                    MessageBox.Show("Выиграл второй игрок.");
-                }
+
+                StepInfoText = _gameInstance.CurrentStepPlayer == _gameInstance.FirstPlayer ? FirstPlayerWinText
+                    : SecondPlayerWinText;
             }
         }
 
@@ -161,7 +171,7 @@ namespace WpfGame
             }
         }
 
-        private static void UpdateCell(CellViewModel cellViewModel, CellState state)
+        private void UpdateCell(CellViewModel cellViewModel, CellState state)
         {
             switch (state)
             {
@@ -178,6 +188,15 @@ namespace WpfGame
                     break;
 
                 default: throw new ArgumentOutOfRangeException();
+            }
+
+            if (_winPoints != null && _winPoints.Any(p => p.X == cellViewModel.X && p.Y == cellViewModel.Y))
+            {
+                cellViewModel.CellColor = Colors.Red;
+            }
+            else
+            {
+                cellViewModel.CellColor = Colors.White;
             }
         }
 

@@ -4,8 +4,9 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WpfGame"
+        xmlns:viewModel="clr-namespace:WpfGame.ViewModel"
         mc:Ignorable="d"
-        Title="Крестики-нолики" Initialized="MainWindow_OnInitialized" d:DataContext="{d:DesignInstance local:MainViewModel}">
+        Title="Крестики-нолики" Initialized="MainWindow_OnInitialized" d:DataContext="{d:DesignInstance viewModel:MainViewModel}">
 
     <Grid>
         <Grid.RowDefinitions>
@@ -23,6 +24,10 @@
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
                     <Button Content="{Binding Sign}" FontSize="22">
+                        <Button.Background>
+                            <SolidColorBrush Color="{Binding CellColor }" />
+                        </Button.Background>
+                        
                         <Button.InputBindings>
                             <MouseBinding Gesture="LeftClick" Command="{Binding CellLeftClickCommand}" CommandParameter="{Binding}" />
                             <MouseBinding Gesture="RightClick" Command="{Binding CellRightClickCommand}" CommandParameter="{Binding}" />
