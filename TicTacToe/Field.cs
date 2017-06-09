@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Vector = System.Tuple<int, int>;
 
 namespace TicTacToe
 {
@@ -8,6 +9,14 @@ namespace TicTacToe
     {
         private const int VictorySequenceSize = 5;
         private readonly Dictionary<Point, Cell> _cells = new Dictionary<Point, Cell>();
+
+        private readonly Vector[] _directions =
+            { new Vector(1, 0), new Vector(0, 1), new Vector(1, 1), new Vector(1, -1) };
+
+        private readonly Vector[] _reverseDirections =
+            { new Vector(-1, 0), new Vector(0, -1), new Vector(-1, -1), new Vector(-1, 1) };
+
+        private Vector _winningVector;
 
         public int VictorySequencySize => VictorySequenceSize;
         public Cell LastTurn { get; private set; }
@@ -84,28 +93,66 @@ namespace TicTacToe
                 return null;
             }
 
-            return new[] { new Point(0, 0) };
+            List<Point> winningPoints = new List<Point> { new Point(LastTurn.X, LastTurn.Y) };
+
+            for (int i = 1; i < 5; i++)
+            {
+                Cell currrentCell = this[LastTurn.X + i * _winningVector.Item1, LastTurn.Y + i * _winningVector.Item2];
+
+                if (currrentCell.State == LastTurn.State)
+                {
+                    winningPoints.Add(new Point(currrentCell.X, currrentCell.Y));
+
+                    if (winningPoints.Count == 5)
+                    {
+                        return winningPoints;
+                    }
+                }
+
+                currrentCell = this[LastTurn.X + i * -1 * _winningVector.Item1,
+                    LastTurn.Y + i * -1 * _winningVector.Item2];
+
+                if (currrentCell.State == LastTurn.State)
+                {
+                    winningPoints.Add(new Point(currrentCell.X, currrentCell.Y));
+
+                    if (winningPoints.Count == 5)
+                    {
+                        return winningPoints;
+                    }
+                }
+            }
+
+            return winningPoints;
         }
 
         private int CalcMaxScore()
         {
             int[] scores =
             {
-                CountScoreInDirection(-1, 0) + CountScoreInDirection(1, 0),
-                CountScoreInDirection(0, -1) + CountScoreInDirection(0, 1),
-                CountScoreInDirection(-1, -1) + CountScoreInDirection(1, 1),
-                CountScoreInDirection(-1, 1) + CountScoreInDirection(1, -1)
+                CountScoreInDirection(_reverseDirections[0]) + CountScoreInDirection(_directions[0]) + 1,
+                CountScoreInDirection(_reverseDirections[1]) + CountScoreInDirection(_directions[1]) + 1,
+                CountScoreInDirection(_reverseDirections[2]) + CountScoreInDirection(_directions[2]) + 1,
+                CountScoreInDirection(_reverseDirections[3]) + CountScoreInDirection(_directions[3]) + 1
             };
 
-            return scores.Max() + 1;
+            for (int i = 0; i < 4; i++)
+            {
+                if (scores[i] >= VictorySequencySize)
+                {
+                    _winningVector = _directions[i];
+                }
+            }
+
+            return scores.Max();
         }
 
-        private int CountScoreInDirection(int dx, int dy)
+        private int CountScoreInDirection(Vector direction)
         {
             int result = 0;
             for (int i = 1; i < VictorySequenceSize; i++)
             {
-                if (this[LastTurn.X + i * dx, LastTurn.Y + i * dy].State == LastTurn.State)
+                if (this[LastTurn.X + i * direction.Item1, LastTurn.Y + i * direction.Item2].State == LastTurn.State)
                 {
                     result++;
                 }
