@@ -1,50 +1,132 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Runtime.CompilerServices;
+using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using TicTacToe;
 using WpfGame.Annotations;
 using WpfGame.Model;
+using WpfGame.Utils;
+using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.AspNetCore.Sockets;
+using Point = TicTacToe.Point;
 
 namespace WpfGame.ViewModel
 {
     public class MainViewModel : INotifyPropertyChanged
     {
-        private const string FirstPlayerText = "Ходит первый игрок (крестики).";
-        private const string SecondPlayerText = "Ходит второй игрок (нолики).";
+        private const string FirstPlayerText = "Ходит игрок (крестики).";
+        private const string SecondPlayerText = "Ходит игрок (нолики).";
         private const string FirstPlayerWinText = "Выиграл первый игрок (крестики).";
         private const string SecondPlayerWinText = "Выиграл второй игрок (нолики).";
 
         private const int DefaultRowsCount = 15;
         private const int DefaultColumnsCount = 15;
 
+        private bool ended;
+
         private readonly ICommand _cellLeftClickCommand;
         private readonly ICommand _cellRightClickCommand;
         private readonly ObservableCollection<CellViewModel> _cells;
 
-        private readonly Game _gameInstance;
+        //private readonly Game _gameInstance;
         private string _stepInfoText;
         private IEnumerable<Point> _winPoints;
 
-        public MainViewModel()
+        private CellState currentState;
+        private CellState myState;
+
+        private NewWaitWindow waitWindow;
+
+        private MainWindow mainWindow;        
+
+        private Dictionary<Point, CellState> field = new Dictionary<Point, CellState>();
+
+        public MainViewModel(MainWindow _mainWindow, NewWaitWindow _waitWindow, CellState _myState)
         {
+            ended = false;
+            myState = _myState;
+            currentState = CellState.Tick;
             _cellLeftClickCommand = new RelayCommand(OnCellLeftClicked);
             _cellRightClickCommand = new RelayCommand(OnCellRightClicked, CanCellRightClick);
             RestartCommand = new RelayCommand(OnRestart);
+            waitWindow = _waitWindow;
+            mainWindow = _mainWindow;
 
-            _gameInstance = Game.Instance;
-            _gameInstance.Turned += OnTurned;
-            _gameInstance.Win += OnWin;
+            //_gameInstance = Game.Instance;
+            //_gameInstance.Turned += OnTurned;
+            //_gameInstance.Win += OnWin;
+                        
 
             _cells = CreateCellViews();
             UpdateCellViews(0, 0);
 
-            _gameInstance.Begin();
+            //_gameInstance.Begin();
             StepInfoText = FirstPlayerText;
+
+            WebSocket.connection.On("GameStarted", () =>
+            {                                
+                mainWindow.Dispatcher.Invoke(() => { mainWindow.Show(); });
+                waitWindow.Dispatcher.Invoke(() => { waitWindow.Close(); });                
+            });
+
+            WebSocket.connection.On("GameEnded", (string cause) =>
+            {
+                if (cause == "disconnected")
+                {
+                    RestartNeeded?.Invoke(this, null);
+                    MessageBox.Show("Connection losed.", "disconnected");
+                }                
+            });
+
+            WebSocket.connection.On<CellState, int, int>("StepMade", (CellState cellState, int x, int y) =>
+            {
+                if (!ended)
+                {
+                    CellViewModel vm = _cells.FirstOrDefault(c => c.X == x && c.Y == y);
+
+                    // Если vm == null, то ход происходит вне видимого поля и его не надо рисовать.
+                    if (vm != null)
+                    {
+                        UpdateCell(vm, cellState);
+                    }
+
+                    if (cellState == CellState.Tack)
+                    {
+                        currentState = CellState.Tick;
+                        StepInfoText = SecondPlayerText;
+                    }
+                    else if (cellState == CellState.Tick)
+                    {
+                        currentState = CellState.Tack;
+                        StepInfoText = FirstPlayerText;
+                    }                    
+                    field.Add(new Point(x, y), cellState);                    
+                }                
+            });
+
+            WebSocket.connection.On("Vin", (IEnumerable<Point> vinPoints) =>
+            {
+                ended = true;
+
+                foreach (Point point in vinPoints)
+                {
+                    CellViewModel cellVm = _cells.FirstOrDefault(c => c.X == point.X && c.Y == point.Y);
+
+                    if (cellVm != null)
+                    {
+                        cellVm.CellColor = Colors.Red;
+                    }                    
+                }
+            });
+
+            Task.Run(async () => { await WebSocket.connection.StartAsync();  });
         }
 
         public int Rows => DefaultRowsCount;
@@ -70,46 +152,46 @@ namespace WpfGame.ViewModel
         public event PropertyChangedEventHandler PropertyChanged;
         public event EventHandler RestartNeeded;
 
-        private async void OnTurned(object sender, TurnedEventArgs turnedEventArgs)
-        {
-            CellViewModel vm = _cells.FirstOrDefault(c => c.X == turnedEventArgs.X && c.Y == turnedEventArgs.Y);
+        //private async void OnTurned(object sender, TurnedEventArgs turnedEventArgs)
+        //{
+        //    CellViewModel vm = _cells.FirstOrDefault(c => c.X == turnedEventArgs.X && c.Y == turnedEventArgs.Y);
 
-            // Если vm == null, то ход происходит вне видимого поля и его не надо рисовать.
-            if (vm != null)
-            {
-                UpdateCell(vm, turnedEventArgs.CellState);
-            }
+        //    // Если vm == null, то ход происходит вне видимого поля и его не надо рисовать.
+        //    if (vm != null)
+        //    {
+        //        UpdateCell(vm, turnedEventArgs.CellState);
+        //    }
 
-            await _gameInstance.NextPlayerStep();
+        //    await _gameInstance.NextPlayerStep();
 
-            if (!_gameInstance.IsEnded)
-            {
-                StepInfoText = _gameInstance.CurrentStepPlayer == _gameInstance.FirstPlayer ? FirstPlayerText
-                    : SecondPlayerText;
-            }
-        }
+        //    if (!_gameInstance.IsEnded)
+        //    {
+        //        StepInfoText = _gameInstance.CurrentStepPlayer == _gameInstance.FirstPlayer ? FirstPlayerText
+        //            : SecondPlayerText;
+        //    }
+        //}
 
-        private void OnWin(object sender, WinEventArgs winEventArgs)
-        {
-            StepInfoText = winEventArgs.Winner == _gameInstance.FirstPlayer ? FirstPlayerWinText : SecondPlayerWinText;
+        //private void OnWin(object sender, WinEventArgs winEventArgs)
+        //{
+        //    StepInfoText = winEventArgs.Winner == _gameInstance.FirstPlayer ? FirstPlayerWinText : SecondPlayerWinText;
 
-            _winPoints = _gameInstance.Field.GetWinningPoints();
+        //    _winPoints = _gameInstance.Field.GetWinningPoints();
 
-            if (_winPoints == null)
-            {
-                return;
-            }
+        //    if (_winPoints == null)
+        //    {
+        //        return;
+        //    }
 
-            foreach (Point point in _winPoints)
-            {
-                CellViewModel cellVm = _cells.FirstOrDefault(c => c.X == point.X && c.Y == point.Y);
+        //    foreach (Point point in _winPoints)
+        //    {
+        //        CellViewModel cellVm = _cells.FirstOrDefault(c => c.X == point.X && c.Y == point.Y);
 
-                if (cellVm != null)
-                {
-                    cellVm.CellColor = Colors.Red;
-                }
-            }
-        }
+        //        if (cellVm != null)
+        //        {
+        //            cellVm.CellColor = Colors.Red;
+        //        }
+        //    }
+        //}
 
         private void OnCellLeftClicked(object args)
         {
@@ -120,12 +202,12 @@ namespace WpfGame.ViewModel
         private async void OnCellRightClicked(object args)
         {
             CellViewModel cellViewModel = (CellViewModel)args;
-            await _gameInstance.CurrentStepPlayer.ForceTurn(cellViewModel.X, cellViewModel.Y);
+            await WebSocket.connection.InvokeAsync ("OnStep", cellViewModel.X, cellViewModel.Y); ;
         }
 
         private bool CanCellRightClick(object args)
         {
-            return !_gameInstance.IsEnded && _gameInstance.CurrentStepPlayer is HumanPlayer;
+            return !ended && myState == currentState;
         }
 
         private void OnRestart(object args)
@@ -162,13 +244,24 @@ namespace WpfGame.ViewModel
             {
                 for (int currentY = beginColumn; currentY <= endColumn; currentY++)
                 {
-                    Cell cellAtPoint = _gameInstance.Field[currentX, currentY];
+                    Point p = new Point(currentX, currentY);
+                    CellState cellAtPoint;
+
+                    if (field.ContainsKey(p))
+                    {
+                        cellAtPoint = field[p];
+                    }
+                    else
+                    {
+                        cellAtPoint = CellState.Empty;
+                    }
+                    
 
                     CellViewModel cellViewModel = _cells[cellViewIndex];
-                    cellViewModel.X = cellAtPoint.X;
-                    cellViewModel.Y = cellAtPoint.Y;
+                    cellViewModel.X = currentX;
+                    cellViewModel.Y = currentY;
 
-                    UpdateCell(cellViewModel, cellAtPoint.State);
+                    UpdateCell(cellViewModel, cellAtPoint);
 
                     cellViewIndex++;
                 }

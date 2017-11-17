@@ -1,28 +1,29 @@
 ﻿using System;
 using System.Windows;
+using TicTacToe;
 using WpfGame.ViewModel;
 
 namespace WpfGame
 {
     public partial class MainWindow : Window
     {
-        public MainWindow()
-        {
+        private MainViewModel m;
+
+        public MainWindow(NewWaitWindow newWaitWindow, CellState cellState)
+        {            
+            m = new MainViewModel(this, newWaitWindow, cellState);
+
             InitializeComponent();
         }
 
         private void MainWindow_OnInitialized(object sender, EventArgs e)
-        {
-            MainViewModel m = new MainViewModel();
+        {            
             m.RestartNeeded += OnRestartNeeded;
             DataContext = m;
         }
 
         private void OnRestartNeeded(object sender, EventArgs eventArgs)
-        {
-            GamersSelectDialog dialog = new GamersSelectDialog();
-            dialog.Show();
-
+        {            
             Close();
         }
     }

@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:WpfGame"
         xmlns:viewModel="clr-namespace:WpfGame.ViewModel"
         mc:Ignorable="d"
-        Title="Крестики-нолики" Initialized="MainWindow_OnInitialized" d:DataContext="{d:DesignInstance viewModel:MainViewModel}">
+        Title="Крестики-нолики" Initialized="MainWindow_OnInitialized">
 
     <Grid>
         <Grid.RowDefinitions>
@@ -39,9 +39,9 @@
 
         <StatusBar Margin="0,3,0,0" Grid.Row="1" Grid.Column="0">
             <StatusBarItem Content="{Binding StepInfoText}" MinWidth="190" />
-            <StatusBarItem>
+            <!--<StatusBarItem>
                 <Button Content="Начать сначала" Command="{Binding RestartCommand}" />
-            </StatusBarItem>
+            </StatusBarItem>-->
         </StatusBar>
     </Grid>
 </Window>
